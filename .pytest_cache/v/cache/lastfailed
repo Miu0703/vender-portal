@@ -1,0 +1,5 @@
+{
+  "tests/test_parsing.py::test_parse_valid_excel": true,
+  "tests/test_parsing.py::test_parse_missing_columns": true,
+  "tests/test_parsing.py::test_parse_invalid_data_types": true
+}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Packing List - Vendor Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">📦 Upload Packing List</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <h6 class="alert-heading">📋 Instructions</h6>
+                    <p class="mb-0">Upload your packing list file. The system will automatically:</p>
+                    <ul class="mb-0 mt-2">
+                        <li>Parse item information from your packing list</li>
+                        <li>Validate against our backend price database</li>
+                        <li>Generate structured JSON output</li>
+                    </ul>
+                </div>
+                
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select Packing List File</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls,.pdf" required>
+                        <div class="form-text">
+                            <strong>Supported formats:</strong> Excel (.xlsx, .xls), PDF (.pdf)<br>
+                            <small class="text-muted">Price information will be automatically enriched from our backend database.</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Upload progress bar -->
+                    <div class="progress mb-3 d-none" id="progressBar">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%">
+                            <span class="progress-text">Processing...</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <i class="fas fa-upload me-2"></i>Upload & Process
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Features Info -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">🔧 System Features</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>📊 Smart Parsing</h6>
+                        <p class="text-muted">Automatically extracts item numbers, descriptions, and quantities from various packing list formats.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>💰 Price Validation</h6>
+                        <p class="text-muted">Cross-references items with our backend price database for accurate pricing.</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>📄 Multi-format Support</h6>
+                        <p class="text-muted">Handles Excel spreadsheets and PDF documents with robust parsing algorithms.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>🔄 JSON Output</h6>
+                        <p class="text-muted">Generates structured JSON data for easy integration with other systems.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('uploadForm').onsubmit = function() {
+    // Show progress bar
+    const progressBar = document.getElementById('progressBar');
+    const submitBtn = document.getElementById('submitBtn');
+    const progressBarElement = document.querySelector('.progress-bar');
+    const progressText = document.querySelector('.progress-text');
+    
+    progressBar.classList.remove('d-none');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    
+    // Simulate upload progress
+    let progress = 0;
+    const steps = [
+        { progress: 20, text: 'Uploading file...' },
+        { progress: 40, text: 'Parsing document...' },
+        { progress: 60, text: 'Extracting items...' },
+        { progress: 80, text: 'Validating prices...' },
+        { progress: 95, text: 'Generating results...' }
+    ];
+    
+    let stepIndex = 0;
+    const interval = setInterval(() => {
+        if (stepIndex < steps.length) {
+            const step = steps[stepIndex];
+            progressBarElement.style.width = step.progress + '%';
+            progressText.textContent = step.text;
+            stepIndex++;
+        } else {
+            clearInterval(interval);
+        }
+    }, 800);
+    
+    // Clean up timer after form submission
+    setTimeout(() => {
+        clearInterval(interval);
+    }, 10000);
+    
+    return true;
+};
+</script>
+{% endblock %} 

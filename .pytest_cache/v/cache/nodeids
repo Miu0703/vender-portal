@@ -1,0 +1,17 @@
+[
+  "tests/test_integration.py::test_end_to_end_flow",
+  "tests/test_integration.py::test_login_failure",
+  "tests/test_integration.py::test_login_required",
+  "tests/test_integration.py::test_login_success",
+  "tests/test_integration.py::test_upload_invalid_file",
+  "tests/test_integration.py::test_upload_missing_file",
+  "tests/test_integration.py::test_upload_success",
+  "tests/test_parsing.py::test_parse_empty_excel",
+  "tests/test_parsing.py::test_parse_invalid_data_types",
+  "tests/test_parsing.py::test_parse_missing_columns",
+  "tests/test_parsing.py::test_parse_valid_excel",
+  "tests/test_price_validation.py::test_validate_empty_list",
+  "tests/test_price_validation.py::test_validate_matching_prices",
+  "tests/test_price_validation.py::test_validate_mismatched_prices",
+  "tests/test_price_validation.py::test_validate_unknown_item"
+]

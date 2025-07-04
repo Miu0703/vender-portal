@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Processing Result - Vendor Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">📋 Processing Result</h4>
+                <a href="{{ url_for('upload.upload') }}" class="btn btn-primary btn-sm">Upload New File</a>
+            </div>
+            <div class="card-body">
+                <h5 class="card-subtitle mb-3">📄 Filename: {{ filename }}</h5>
+                
+                <!-- Processing status -->
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>Successfully processed {{ result.data.total }} records
+                </div>
+                
+                <!-- Results table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Item No</th>
+                                <th>Description</th>
+                                <th>Qty</th>
+                                <th>🧾 Packing List Price</th>
+                                <th>💻 System Price</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in result.data.rows %}
+                            <tr>
+                                <td><code>{{ row.ItemNo }}</code></td>
+                                <td>{{ row.Description }}</td>
+                                <td><span class="badge bg-secondary">{{ row.Qty }}</span></td>
+                                <td>
+                                    {% if row.HasPackingListPrice %}
+                                        <span class="text-success fw-bold">${{ "%.2f"|format(row.PackingListPrice) }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if row.SystemPrice %}
+                                        <span class="text-primary fw-bold">${{ "%.2f"|format(row.SystemPrice) }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Not Found</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if row.PriceComparisonStatus == "no_price" %}
+                                        <span class="badge bg-warning text-dark">{{ row.StatusDisplay }}</span>
+                                    {% elif row.PriceComparisonStatus == "match" %}
+                                        <span class="badge bg-success">{{ row.StatusDisplay }}</span>
+                                    {% elif row.PriceComparisonStatus == "mismatch" %}
+                                        <span class="badge bg-danger">{{ row.StatusDisplay }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ row.StatusDisplay }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Summary Statistics -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-primary">{{ result.data.total }}</h5>
+                                <p class="card-text">Total Items</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-success">
+                                    {{ result.data.rows | selectattr('PriceComparisonStatus', 'equalto', 'match') | list | length }}
+                                </h5>
+                                <p class="card-text">Price Match</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-danger">
+                                    {{ result.data.rows | selectattr('PriceComparisonStatus', 'equalto', 'mismatch') | list | length }}
+                                </h5>
+                                <p class="card-text">Price Mismatch</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-warning">
+                                    {{ result.data.rows | selectattr('PriceComparisonStatus', 'equalto', 'no_price') | list | length }}
+                                </h5>
+                                <p class="card-text">No Price in Packing List</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Price validation results -->
+                {% if result.validation.price_mismatches %}
+                <div class="alert alert-warning mt-4">
+                    <h6 class="alert-heading">⚠️ Price Validation Issues</h6>
+                    <ul class="mb-0">
+                        {% for error in result.validation.price_mismatches %}
+                        <li>{{ error.message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Download options -->
+                <div class="mt-4">
+                    <h6>📥 Export Options</h6>
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="downloadJSON()">
+                        <i class="fas fa-download me-1"></i>Download JSON
+                    </button>
+                    <button class="btn btn-outline-success btn-sm me-2" onclick="downloadCSV()">
+                        <i class="fas fa-file-csv me-1"></i>Download CSV
+                    </button>
+                    <!-- Toggle JSON view -->
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#jsonCollapse" aria-expanded="false" aria-controls="jsonCollapse">
+                        <i class="fas fa-code me-1"></i>Show JSON
+                    </button>
+                </div>
+
+                <!-- Collapsible JSON view -->
+                <div class="collapse mt-3" id="jsonCollapse">
+                    <div class="card card-body bg-light">
+                        <pre class="mb-0"><code id="jsonOutput">{{ result | tojson(indent=2) }}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Download functions
+function downloadJSON() {
+    const data = {{ result | tojson | safe }};
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'packing_list_result.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function downloadCSV() {
+    const rows = {{ result.data.rows | tojson | safe }};
+    const headers = ['ItemNo', 'Description', 'Qty', 'PackingListPrice', 'SystemPrice', 'StatusDisplay'];
+    
+    let csv = headers.join(',') + '\\n';
+    rows.forEach(row => {
+        const csvRow = headers.map(header => {
+            let value = row[header] || '';
+            if (typeof value === 'string' && value.includes(',')) {
+                value = '"' + value + '"';
+            }
+            return value;
+        }).join(',');
+        csv += csvRow + '\\n';
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'packing_list_result.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}
